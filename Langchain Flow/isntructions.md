@@ -38,6 +38,42 @@ The backend and database will be **deployed on Railway**, ensuring a scalable an
   - Handle **API calls, data transformations, and conditions**.
   - Provide **execution logs** to help users debug.
 
+### Flow Execution Details
+
+#### Frontend-Backend Communication
+- When a user initiates flow execution from a specific node:
+  1. The frontend serializes the entire graph structure (nodes, edges, configurations)
+  2. This structure is sent to the backend as a JSON payload along with the starting node ID
+  3. The backend validates the flow structure for cycles and compatibility
+  4. A WebSocket connection is established for real-time updates
+
+#### Execution Order Determination
+- The backend uses topological sorting to determine node execution order:
+  1. Starting from the specified entry node
+  2. Following outgoing connections (edges) to subsequent nodes
+  3. Ensuring prerequisite nodes are processed before dependent nodes
+  4. Detecting and handling any branching or merging paths
+
+#### Data Flow Between Nodes
+- Data passes between nodes following these principles:
+  1. Each node defines input and output interfaces (handles)
+  2. Output from one node becomes input to connected nodes
+  3. For nodes with multiple inputs, all inputs must be available before processing
+  4. For nodes like the text splitter that produce multiple outputs, the downstream flow executes for each output
+
+#### State Management During Execution
+- The execution engine maintains state:
+  1. Tracking completed nodes and their outputs
+  2. Managing in-progress nodes
+  3. Storing temporary data between node executions
+  4. Handling error states and recovery options
+
+#### Special Node Behavior
+- **Prompt nodes**: Parse template variables and create input handles dynamically
+- **LLM nodes**: Make API calls to respective providers and stream responses when possible
+- **Text splitter nodes**: Execute remainder of flow once for each text chunk
+- **Database nodes**: Handle asynchronous operations with appropriate status feedback
+
 ### Backend Structure
 
 - **Modular Node System**: Components should be designed to be **extendable** for future integrations.
